@@ -4,7 +4,8 @@ let
     openssl = pkgs.openssl;
     python = pkgs.python3;
   };
-in {
+in
+{
   nodejs-16_13_0 = buildNodejs {
     enableNpm = true;
     version = "16.13.0";
