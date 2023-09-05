@@ -6,7 +6,6 @@
   };
   inputs.flake-utils = {
     url = "github:numtide/flake-utils";
-    inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs = { self, nixpkgs, flake-utils }:
@@ -91,17 +90,7 @@
       in
       {
         devShells = {
-          metaDev =
-            let
-              pkgs = makePkgs { };
-            in
-            pkgs.mkShell {
-              packages = [
-                pkgs.nil
-                pkgs.nixpkgs-fmt
-              ];
-            };
-          meta =
+          default =
             let
               pkgs = makePkgs { };
               scripts = (pkgs.writeShellApplication {
@@ -119,7 +108,10 @@
               commonShell = makeCommonShell { inherit pkgs; };
             in
             pkgs.mkShell commonShell // {
-              packages = scripts;
+              packages = scripts ++ [
+                pkgs.nil
+                pkgs.nixpkgs-fmt
+              ];
             };
           main =
             let
