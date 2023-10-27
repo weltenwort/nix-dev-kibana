@@ -93,26 +93,28 @@
           default =
             let
               pkgs = makePkgs { };
-              scripts = (pkgs.writeShellApplication {
-                name = "meta-clone";
-                runtimeInputs = [
-                  pkgs.git
-                  pkgs.gh
-                ];
-                text = ''
-                  cd ~/repos
-                  gh repo clone weltenwort/kibana
-                  echo "use flake ~/nix-flakes/kibana#main" >> ~/repos/kibana/.envrc
-                '';
-              });
+              scripts = [
+                (pkgs.writeShellApplication {
+                  name = "meta-clone";
+                  runtimeInputs = [
+                    pkgs.git
+                    pkgs.gh
+                  ];
+                  text = ''
+                    cd ~/repos
+                    gh repo clone weltenwort/kibana
+                    echo "use flake ~/nix-flakes/kibana#main" >> ~/repos/kibana/.envrc
+                  '';
+                })
+              ];
               commonShell = makeCommonShell { inherit pkgs; };
             in
-            pkgs.mkShell commonShell // {
+            pkgs.mkShell (commonShell // {
               packages = scripts ++ [
                 pkgs.nil
                 pkgs.nixpkgs-fmt
               ];
-            };
+            });
           main =
             let
               pkgs = makePkgs {
