@@ -2,7 +2,6 @@
   description = "A Kibana development flake";
   inputs.nixpkgs = {
     url = "github:NixOS/nixpkgs/nixpkgs-unstable";
-    #url = "github:NixOS/nixpkgs/nixos-unstable";
   };
   inputs.flake-utils = {
     url = "github:numtide/flake-utils";
@@ -16,22 +15,22 @@
             inherit system;
             overlays = [
               (final: prev: {
-                nodejs-current = prev.nodejs-16_x;
+                nodejs-current = prev.nodejs-18_x;
+                chromium = prev.symlinkJoin {
+                  name = "chromium";
+                  paths = [ prev.chromium ];
+                  buildInputs = [ prev.makeWrapper ];
+                  postBuild = ''
+                    wrapProgram $out/bin/chromium \
+                    --add-flags "--disable-gpu"
+                  '';
+                };
               })
             ] ++ overlays ++
             [
               (final: prev: {
                 yarn = prev.yarn.override {
                   nodejs = final.nodejs-current;
-                };
-                chromium = prev.symlinkJoin {
-                  name = "chromium";
-                  paths = [ prev.chromium ];
-                  buildInputs = [ final.makeWrapper ];
-                  postBuild = ''
-                    wrapProgram $out/bin/chromium \
-                    --add-flags "--disable-gpu"
-                  '';
                 };
               })
             ];
@@ -82,6 +81,14 @@
               NODE_OPTIONS=--openssl-legacy-provider node scripts/kibana.js --dev
             '';
           })
+          (pkgs.writeShellApplication {
+            name = "kbn-lint-fix";
+            text = ''
+              set -x
+              node scripts/lint_ts_projects.js --fix
+              node scripts/eslint.js --fix
+            '';
+          })
         ];
         makeCommonShell = { pkgs }: {
           DISPLAY = ":0";
@@ -126,15 +133,18 @@
                   #            (final: prev: {
                   #              nodejs-current = final.nodejs-16_16_0;
                   #            })
+                  (final: prev: {
+                    nodejs-current = final.nodejs-18_x;
+                  })
                 ];
               };
               scripts = makeScripts { inherit pkgs; };
               commonPackages = makeCommonPackages { inherit pkgs; };
               commonShell = makeCommonShell { inherit pkgs; };
             in
-            pkgs.mkShell commonShell // {
+            pkgs.mkShell (commonShell // {
               packages = commonPackages ++ scripts;
-            };
+            });
           v7-16 =
             let
               pkgs = makePkgs {
@@ -152,9 +162,9 @@
               commonShell = makeCommonShell { inherit pkgs; };
               commonPackages = makeCommonPackages { inherit pkgs; };
             in
-            pkgs.mkShell commonShell // {
+            pkgs.mkShell (commonShell // {
               packages = commonPackages ++ scripts;
-            };
+            });
         };
       });
 }
