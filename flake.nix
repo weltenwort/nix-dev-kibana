@@ -14,18 +14,17 @@
           import nixpkgs {
             inherit system;
             overlays = [
-              (final: prev: {
-                nodejs-current = prev.nodejs-18_x;
-                chromium = prev.symlinkJoin {
-                  name = "chromium";
-                  paths = [ prev.chromium ];
-                  buildInputs = [ prev.makeWrapper ];
-                  postBuild = ''
-                    wrapProgram $out/bin/chromium \
-                    --add-flags "--disable-gpu"
-                  '';
-                };
-              })
+#              (final: prev: {
+#                chromium = prev.symlinkJoin {
+#                  name = "chromium";
+#                  paths = [ prev.chromium ];
+#                  buildInputs = [ prev.makeWrapper ];
+#                  postBuild = ''
+#                    wrapProgram $out/bin/chromium \
+#                    --add-flags "--disable-gpu"
+#                  '';
+#                };
+#              })
             ] ++ overlays ++
             [
               (final: prev: {
@@ -78,7 +77,7 @@
             name = "kbn-start-dev";
             text = ''
               set -x
-              NODE_OPTIONS=--openssl-legacy-provider node scripts/kibana.js --dev
+              NODE_OPTIONS=--openssl-legacy-provider node scripts/kibana.js --dev --no-base-path
             '';
           })
           (pkgs.writeShellApplication {
@@ -89,10 +88,18 @@
               node scripts/eslint.js --fix
             '';
           })
+          (pkgs.writeShellApplication {
+            name = "kbn-profile-bundle";
+            text = ''
+              set -x
+              node scripts/build_kibana_platform_plugins.js --dist --no-examples --profile --no-cache "--focus=''${1}"
+            '';
+          })
         ];
         makeCommonShell = { pkgs }: {
           DISPLAY = ":0";
           FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
+          CHROMIUM_FLAGS = "--disable-gpu";
         };
       in
       {
