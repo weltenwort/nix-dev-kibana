@@ -147,6 +147,13 @@
 
                     # Install packages
                     sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+                    # Add to group
+                    sudo gpasswd -a ubuntu docker
+
+                    # Set params for ES in docker
+                    echo "vm.max_map_count=262144" | sudo tee /etc/sysctl.d/local.conf
+                    sudo systemctl restart procps.service
                   '';
                 })
               ];
