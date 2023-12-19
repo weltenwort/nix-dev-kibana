@@ -3,28 +3,31 @@
   inputs.nixpkgs = {
     url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
+  inputs.nixpkgs-nodejs-18-18-2 = {
+    url = "github:NixOS/nixpkgs/b034e4cbf12f7c0d749674c102e31e6a47fa2d7f";
+  };
   inputs.flake-utils = {
     url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
+  outputs = { self, nixpkgs, nixpkgs-nodejs-18-18-2, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         makePkgs = { overlays ? [ ] }:
           import nixpkgs {
             inherit system;
             overlays = [
-#              (final: prev: {
-#                chromium = prev.symlinkJoin {
-#                  name = "chromium";
-#                  paths = [ prev.chromium ];
-#                  buildInputs = [ prev.makeWrapper ];
-#                  postBuild = ''
-#                    wrapProgram $out/bin/chromium \
-#                    --add-flags "--disable-gpu"
-#                  '';
-#                };
-#              })
+              #              (final: prev: {
+              #                chromium = prev.symlinkJoin {
+              #                  name = "chromium";
+              #                  paths = [ prev.chromium ];
+              #                  buildInputs = [ prev.makeWrapper ];
+              #                  postBuild = ''
+              #                    wrapProgram $out/bin/chromium \
+              #                    --add-flags "--disable-gpu"
+              #                  '';
+              #                };
+              #              })
             ] ++ overlays ++
             [
               (final: prev: {
@@ -169,16 +172,23 @@
             let
               pkgs = makePkgs {
                 overlays = [
-                  #            (final: prev: import ./nodejs-versions.nix {
-                  #              pkgs = prev;
-                  #              inherit nixpkgs;
-                  #            })
-                  #            (final: prev: {
-                  #              nodejs-current = final.nodejs-16_16_0;
-                  #            })
-                  (final: prev: {
-                    nodejs-current = final.nodejs-18_x;
-                  })
+                  #(final: prev: import ./nodejs-versions.nix {
+                  #  pkgs = prev;
+                  #  inherit nixpkgs;
+                  #})
+                  (final: prev:
+                    let
+                      pkgs-nodejs-18-18-2 = (import nixpkgs-nodejs-18-18-2 {
+                        inherit system;
+                      });
+                    in
+                    {
+                      nodejs-current = pkgs-nodejs-18-18-2.nodejs-18_x;
+                    }
+                  )
+                  #(final: prev: {
+                  #  nodejs-current = final.nodejs-18_x;
+                  #})
                 ];
               };
               scripts = makeScripts { inherit pkgs; };
