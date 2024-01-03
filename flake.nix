@@ -105,6 +105,17 @@
               node scripts/build_kibana_platform_plugins.js --dist --no-examples --profile --no-cache "--focus=''${1}"
             '';
           })
+          (pkgs.writeShellApplication {
+            name = "kbn-synthtrace";
+            text = ''
+              set -x
+              node scripts/synthtrace.js \
+                --target "http://elastic_serverless:changeme@localhost:9200/" \
+                --kibana "http://elastic_serverless:changeme@localhost:5601/" \
+                --logLevel debug \
+                "''${@}"
+            '';
+          })
         ];
         makeCommonShell = { pkgs }: {
           DISPLAY = ":0";
@@ -176,19 +187,19 @@
                   #  pkgs = prev;
                   #  inherit nixpkgs;
                   #})
-                  (final: prev:
-                    let
-                      pkgs-nodejs-18-18-2 = (import nixpkgs-nodejs-18-18-2 {
-                        inherit system;
-                      });
-                    in
-                    {
-                      nodejs-current = pkgs-nodejs-18-18-2.nodejs-18_x;
-                    }
-                  )
-                  #(final: prev: {
-                  #  nodejs-current = final.nodejs-18_x;
-                  #})
+                  #(final: prev:
+                  #  let
+                  #    pkgs-nodejs-18-18-2 = (import nixpkgs-nodejs-18-18-2 {
+                  #      inherit system;
+                  #    });
+                  #  in
+                  #  {
+                  #    nodejs-current = pkgs-nodejs-18-18-2.nodejs-18_x;
+                  #  }
+                  #)
+                  (final: prev: {
+                    nodejs-current = final.nodejs_20;
+                  })
                 ];
               };
               scripts = makeScripts { inherit pkgs; };
