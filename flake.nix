@@ -110,6 +110,17 @@
             text = ''
               set -x
               node scripts/synthtrace.js \
+                --target "http://elastic:changeme@localhost:9200/" \
+                --kibana "http://elastic:changeme@localhost:5601/" \
+                --logLevel debug \
+                "''${@}"
+            '';
+          })
+          (pkgs.writeShellApplication {
+            name = "kbn-serverless-synthtrace";
+            text = ''
+              set -x
+              node scripts/synthtrace.js \
                 --target "http://elastic_serverless:changeme@localhost:9200/" \
                 --kibana "http://elastic_serverless:changeme@localhost:5601/" \
                 --logLevel debug \
