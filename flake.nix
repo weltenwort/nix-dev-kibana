@@ -3,14 +3,11 @@
   inputs.nixpkgs = {
     url = "github:NixOS/nixpkgs/nixpkgs-unstable";
   };
-  inputs.nixpkgs-nodejs-18-18-2 = {
-    url = "github:NixOS/nixpkgs/b034e4cbf12f7c0d749674c102e31e6a47fa2d7f";
-  };
   inputs.flake-utils = {
     url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, nixpkgs-nodejs-18-18-2, flake-utils }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
         makePkgs = { overlays ? [ ] }:
@@ -30,16 +27,15 @@
               #              })
             ] ++ overlays ++
             [
-              (final: prev: {
-                yarn = prev.yarn.override {
-                  nodejs = final.nodejs-current;
-                };
-              })
+              # (final: prev: {
+              #   yarn = prev.yarn.override {
+              #     nodejs = final.nodejs-current;
+              #   };
+              # })
             ];
           };
         makeCommonPackages = { pkgs }: [
-          pkgs.nodejs-current
-          pkgs.yarn
+          pkgs.nodenv
           pkgs.chromium
           pkgs.fontconfig
           pkgs.noto-fonts
@@ -127,6 +123,11 @@
                 "''${@}"
             '';
           })
+          (pkgs.writeScriptBin "kbn-init-dev" ''
+            #!${pkgs.fish}/bin/fish
+            nvm install
+            npm install -g yarn
+          '')
         ];
         makeCommonShell = { pkgs }: {
           DISPLAY = ":0";
@@ -148,8 +149,13 @@
                   ];
                   text = ''
                     cd ~/repos
+
                     gh repo clone weltenwort/kibana
-                    echo "use flake ~/nix-flakes/kibana#main" >> ~/repos/kibana/.envrc
+
+                    cat <<-EOL >> ~/repos/kibana/.envrc
+                    use flake ~/nix-flakes/kibana#main
+                    use node
+                    EOL
                   '';
                 })
                 (pkgs.writeShellApplication {
@@ -208,9 +214,9 @@
                   #    nodejs-current = pkgs-nodejs-18-18-2.nodejs-18_x;
                   #  }
                   #)
-                  (final: prev: {
-                    nodejs-current = final.nodejs_20;
-                  })
+                  #(final: prev: {
+                  #  nodejs-current = final.nodejs_20;
+                  #})
                 ];
               };
               scripts = makeScripts { inherit pkgs; };
