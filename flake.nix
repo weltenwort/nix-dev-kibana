@@ -125,6 +125,10 @@
           })
           (pkgs.writeScriptBin "kbn-init-dev" ''
             #!${pkgs.fish}/bin/fish
+
+            echo "fs.inotify.max_user_watches=524288" | sudo tee -a /etc/sysctl.d/99-local.conf
+            sudo sysctl --system
+
             nvm install
             npm install -g yarn
           '')
@@ -150,7 +154,7 @@
                   text = ''
                     cd ~/repos
 
-                    gh repo clone weltenwort/kibana
+                    gh repo clone weltenwort/kibana -- --filter=blob:none
 
                     cat <<-EOL >> ~/repos/kibana/.envrc
                     use flake ~/nix-flakes/kibana#main
