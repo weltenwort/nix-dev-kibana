@@ -7,10 +7,19 @@
     url = "github:numtide/flake-utils";
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
-        makePkgs = { overlays ? [ ] }:
+        makePkgs =
+          {
+            overlays ? [ ],
+          }:
           import nixpkgs {
             inherit system;
             overlays = [
@@ -25,8 +34,9 @@
               #                  '';
               #                };
               #              })
-            ] ++ overlays ++
-            [
+            ]
+            ++ overlays
+            ++ [
               # (final: prev: {
               #   yarn = prev.yarn.override {
               #     nodejs = final.nodejs-current;
@@ -34,110 +44,123 @@
               # })
             ];
           };
-        makeCommonPackages = { pkgs }: [
-          pkgs.nodenv
-          pkgs.chromium
-          pkgs.fontconfig
-          pkgs.noto-fonts
-          pkgs.icewm
-        ];
-        makeScripts = { pkgs }: [
-          (pkgs.writeShellApplication {
-            name = "kbn-start-xvnc";
-            runtimeInputs = [
-              pkgs.tigervnc
-            ];
-            text = ''
-              Xvnc -depth 24 -geometry 1920x1080 -rfbport 5900 SecurityTypes=None
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-start-xpack-functional-server";
-            text = ''
-              set -x
-              cd x-pack && node scripts/functional_tests_server.js --config "''${1:-test/functional/config.js}"
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-start-functional-runner";
-            text = ''
-              set -x
-              node scripts/functional_test_runner.js --config "''${1:-x-pack/test/functional/config.js}"
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-bootstrap";
-            text = ''
-              set -x
-              node scripts/kbn.js bootstrap && NODE_OPTIONS=--openssl-legacy-provider node scripts/build_kibana_platform_plugins.js --no-examples
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-start-dev";
-            text = ''
-              set -x
-              NODE_OPTIONS=--openssl-legacy-provider node scripts/kibana.js --dev --no-base-path
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-start-serverless-oblt-dev";
-            text = ''
-              set -x
-              NODE_OPTIONS=--openssl-legacy-provider node scripts/kibana.js --dev --no-base-path --serverless=oblt
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-lint-fix";
-            text = ''
-              set -x
-              node scripts/lint_ts_projects.js --fix
-              node scripts/eslint.js --fix
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-profile-bundle";
-            text = ''
-              set -x
-              node scripts/build_kibana_platform_plugins.js --dist --no-examples --profile --no-cache "--focus=''${1}"
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-synthtrace";
-            text = ''
-              set -x
-              node scripts/synthtrace.js \
-                --target "http://elastic:changeme@localhost:9200/" \
-                --kibana "http://elastic:changeme@localhost:5601/" \
-                --logLevel debug \
-                "''${@}"
-            '';
-          })
-          (pkgs.writeShellApplication {
-            name = "kbn-serverless-synthtrace";
-            text = ''
-              set -x
-              node scripts/synthtrace.js \
-                --target "http://elastic_serverless:changeme@localhost:9200/" \
-                --kibana "http://elastic_serverless:changeme@localhost:5601/" \
-                --logLevel debug \
-                "''${@}"
-            '';
-          })
-          (pkgs.writeScriptBin "kbn-init-dev" ''
-            #!${pkgs.fish}/bin/fish
+        makeCommonPackages =
+          { pkgs }:
+          [
+            pkgs.nodenv
+            pkgs.chromium
+            pkgs.fontconfig
+            pkgs.noto-fonts
+            pkgs.icewm
+          ];
+        makeScripts =
+          { pkgs }:
+          [
+            (pkgs.writeShellApplication {
+              name = "kbn-start-xvnc";
+              runtimeInputs = [
+                pkgs.tigervnc
+              ];
+              text = ''
+                Xvnc -depth 24 -geometry 1920x1080 -rfbport 5900 SecurityTypes=None
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-start-xpack-functional-server";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                cd x-pack && node scripts/functional_tests_server.js --config "''${1:-test/functional/config.js}"
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-start-functional-runner";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/functional_test_runner.js --config "''${1:-x-pack/test/functional/config.js}"
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-bootstrap";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/kbn.js bootstrap && node scripts/build_kibana_platform_plugins.js --no-examples
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-start-dev";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/kibana.js --dev --no-base-path
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-start-serverless-oblt-dev";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/kibana.js --dev --no-base-path --serverless=oblt
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-lint-fix";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/lint_ts_projects.js --fix
+                node scripts/eslint.js --fix
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-profile-bundle";
+              text = ''
+                set -x
+                export NODE_OPTIONS="--openssl-legacy-provider --max-old-space-size=8192''${NODE_OPTIONS:+ $NODE_OPTIONS}"
+                node scripts/build_kibana_platform_plugins.js --dist --no-examples --profile --no-cache "--focus=''${1}"
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-synthtrace";
+              text = ''
+                set -x
+                node scripts/synthtrace.js \
+                  --target "http://elastic:changeme@localhost:9200/" \
+                  --kibana "http://elastic:changeme@localhost:5601/" \
+                  --logLevel debug \
+                  "''${@}"
+              '';
+            })
+            (pkgs.writeShellApplication {
+              name = "kbn-serverless-synthtrace";
+              text = ''
+                set -x
+                node scripts/synthtrace.js \
+                  --target "http://elastic_serverless:changeme@localhost:9200/" \
+                  --kibana "http://elastic_serverless:changeme@localhost:5601/" \
+                  --logLevel debug \
+                  "''${@}"
+              '';
+            })
+            (pkgs.writeScriptBin "kbn-init-dev" ''
+              #!${pkgs.fish}/bin/fish
 
-            echo "fs.inotify.max_user_watches=524288" | sudo tee -a /etc/sysctl.d/99-local.conf
-            sudo sysctl --system
+              echo "fs.inotify.max_user_watches=524288" | sudo tee -a /etc/sysctl.d/99-local.conf
+              sudo sysctl --system
 
-            nvm install
-            npm install -g yarn
-          '')
-        ];
-        makeCommonShell = { pkgs }: {
-          DISPLAY = ":0";
-          FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
-          CHROMIUM_FLAGS = "--disable-gpu";
-        };
+              nvm install
+              npm install -g yarn
+            '')
+          ];
+        makeCommonShell =
+          { pkgs }:
+          {
+            DISPLAY = ":0";
+            FONTCONFIG_FILE = "${pkgs.fontconfig.out}/etc/fonts/fonts.conf";
+            CHROMIUM_FLAGS = "--disable-gpu";
+          };
       in
       {
         devShells = {
@@ -194,12 +217,15 @@
               ];
               commonShell = makeCommonShell { inherit pkgs; };
             in
-            pkgs.mkShell (commonShell // {
-              packages = scripts ++ [
-                pkgs.nil
-                pkgs.nixpkgs-fmt
-              ];
-            });
+            pkgs.mkShell (
+              commonShell
+              // {
+                packages = scripts ++ [
+                  pkgs.nil
+                  pkgs.nixpkgs-fmt
+                ];
+              }
+            );
           main =
             let
               pkgs = makePkgs {
@@ -227,17 +253,23 @@
               commonPackages = makeCommonPackages { inherit pkgs; };
               commonShell = makeCommonShell { inherit pkgs; };
             in
-            pkgs.mkShell (commonShell // {
-              packages = commonPackages ++ scripts;
-            });
+            pkgs.mkShell (
+              commonShell
+              // {
+                packages = commonPackages ++ scripts;
+              }
+            );
           v7-16 =
             let
               pkgs = makePkgs {
                 overlays = [
-                  (final: prev: import ./nodejs-versions.nix {
-                    pkgs = prev;
-                    inherit nixpkgs;
-                  })
+                  (
+                    final: prev:
+                    import ./nodejs-versions.nix {
+                      pkgs = prev;
+                      inherit nixpkgs;
+                    }
+                  )
                   (final: prev: {
                     nodejs-current = final.nodejs-16_13_0;
                   })
@@ -247,9 +279,13 @@
               commonShell = makeCommonShell { inherit pkgs; };
               commonPackages = makeCommonPackages { inherit pkgs; };
             in
-            pkgs.mkShell (commonShell // {
-              packages = commonPackages ++ scripts;
-            });
+            pkgs.mkShell (
+              commonShell
+              // {
+                packages = commonPackages ++ scripts;
+              }
+            );
         };
-      });
+      }
+    );
 }
