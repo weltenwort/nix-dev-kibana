@@ -249,6 +249,62 @@
                   #})
                 ];
               };
+              playwrightShell = pkgs.buildFHSEnv {
+
+                name = "playwrightShell";
+
+                targetPkgs =
+                  pkgs: with pkgs; [
+
+                    # playwright (chrome headless = false works)
+                    openssl
+                    glibc
+                    glibc.dev
+
+                    glib
+                    cups.lib
+                    cups
+                    nss
+                    nssTools
+                    alsa-lib
+                    dbus
+                    at-spi2-core
+                    libdrm
+                    libudev-zero
+                    expat
+                    xorg.libX11
+                    xorg.libXcomposite
+                    xorg.libXdamage
+                    xorg.libXext
+                    xorg.libXfixes
+                    xorg.libXrandr
+                    xorg.libxcb
+                    mesa
+                    libxkbcommon
+                    pango
+                    cairo
+                    nspr
+                  ];
+
+                # profile = ''
+                #   export LD_LIBRARY_PATH=/run/opengl-driver/lib:/run/opengl-driver-32/lib:/lib
+                #   export FONTCONFIG_FILE=/etc/fonts/fonts.conf
+                # '';
+
+                runScript = pkgs.writeShellScript "wrapper" ''
+                  exec ${pkgs.fish}/bin/fish
+                '';
+
+                # As intended by this bubble wrap, share as much namespaces as possible with user.
+                unshareUser = false;
+                unshareIpc = false;
+                unsharePid = false;
+                unshareNet = false;
+                unshareUts = false;
+                unshareCgroup = false;
+                # Since "insync start" command starts a daemon, this daemon should die with it.
+                dieWithParent = true;
+              };
               scripts = makeScripts { inherit pkgs; };
               commonPackages = makeCommonPackages { inherit pkgs; };
               commonShell = makeCommonShell { inherit pkgs; };
@@ -256,7 +312,7 @@
             pkgs.mkShell (
               commonShell
               // {
-                packages = commonPackages ++ scripts;
+                packages = commonPackages ++ scripts ++ [ playwrightShell ];
               }
             );
           v7-16 =
