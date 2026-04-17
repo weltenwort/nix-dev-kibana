@@ -251,7 +251,7 @@
               };
               playwrightShell = pkgs.buildFHSEnv {
 
-                name = "playwrightShell";
+                name = "npx-playwright-test";
 
                 targetPkgs =
                   pkgs: with pkgs; [
@@ -292,7 +292,7 @@
                 # '';
 
                 runScript = pkgs.writeShellScript "wrapper" ''
-                  exec ${pkgs.fish}/bin/fish
+                  exec npx playwright test "$@"
                 '';
 
                 # As intended by this bubble wrap, share as much namespaces as possible with user.
